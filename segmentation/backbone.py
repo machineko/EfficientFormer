@@ -93,7 +93,7 @@ class Attention(torch.nn.Module):
         attn = (q @ k.transpose(-2, -1)) * self.scale
         bias = self.attention_biases_seg[:, self.attention_bias_idxs_seg] if self.training else self.ab
 
-        bias = torch.nn.functional.interpolate(bias.unsqueeze(0), size=(attn.size(-2), attn.size(-1)), mode='bicubic')
+        bias = torch.nn.functional.interpolate(bias.unsqueeze(0), size=(attn.size(-2), attn.size(-1)), mode='bilinear')
         attn = attn + bias
 
         attn = attn.softmax(dim=-1)
@@ -416,7 +416,7 @@ class EfficientFormer(nn.Module):
         # load pre-trained model
         if self.fork_feat and (
                 self.init_cfg is not None or pretrained is not None):
-            self.init_weights()
+            self.init_weights(pretrained=pretrained)
 
     # init for classification
     def cls_init_weights(self, m):
@@ -435,10 +435,6 @@ class EfficientFormer(nn.Module):
                         f'training start from scratch')
             pass
         else:
-            assert 'checkpoint' in self.init_cfg, f'Only support ' \
-                                                  f'specify `Pretrained` in ' \
-                                                  f'`init_cfg` in ' \
-                                                  f'{self.__class__.__name__} '
             if self.init_cfg is not None:
                 ckpt_path = self.init_cfg['checkpoint']
             elif pretrained is not None:
