@@ -13,6 +13,14 @@ from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.models.layers import DropPath, trunc_normal_
 from timm.models.registry import register_model
 from timm.models.layers.helpers import to_2tuple
+try:
+    from mmseg.utils import get_root_logger
+    from mmcv.runner import _load_checkpoint
+
+    has_mmseg = True
+except ImportError:
+    print("If for semantic segmentation, please install mmsegmentation first")
+    has_mmseg = False
 
 EfficientFormer_width = {
     'l1': [48, 96, 224, 448],
@@ -80,6 +88,7 @@ class Attention(torch.nn.Module):
                 (self.attention_biases[:, self.attention_bias_idxs]
                  if self.training else self.ab)
         )
+
         attn = attn.softmax(dim=-1)
         x = (attn @ v).transpose(1, 2).reshape(B, N, self.dh)
         x = self.proj(x)
